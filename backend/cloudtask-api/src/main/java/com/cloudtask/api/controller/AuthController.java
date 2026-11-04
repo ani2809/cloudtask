@@ -3,6 +3,7 @@ package com.cloudtask.api.controller;
 
 import com.cloudtask.api.dto.LoginRequest;
 import com.cloudtask.api.dto.LoginResponse;
+import com.cloudtask.api.dto.RefreshTokenRequest;
 import com.cloudtask.api.dto.RegisterRequest;
 import com.cloudtask.api.entity.User;
 import com.cloudtask.api.service.AuthService;
@@ -48,5 +49,20 @@ public class AuthController {
             @Valid @RequestBody LoginRequest request) {
 
         return authenticationService.login(request);
+    }
+
+    @PostMapping("/refresh")
+    public LoginResponse refresh(
+            @Valid @RequestBody RefreshTokenRequest request) {
+
+        return authenticationService.refresh(request.refreshToken());
+    }
+
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout(
+            @Valid @RequestBody RefreshTokenRequest request) {
+
+        authenticationService.logout(request.refreshToken());
     }
 }

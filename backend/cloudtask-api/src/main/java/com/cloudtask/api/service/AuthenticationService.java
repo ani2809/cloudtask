@@ -5,6 +5,7 @@ import com.cloudtask.api.dto.LoginRequest;
 import com.cloudtask.api.dto.LoginResponse;
 import com.cloudtask.api.entity.RefreshToken;
 import com.cloudtask.api.entity.User;
+import com.cloudtask.api.exception.InvalidRefreshTokenException;
 import com.cloudtask.api.repository.RefreshTokenRepository;
 import com.cloudtask.api.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,7 +48,8 @@ public class AuthenticationService {
         this.accessTokenExpiration = accessTokenExpiration;
         this.refreshTokenExpiration = refreshTokenExpiration;
     }
-     @Transactional
+
+    @Transactional
     public LoginResponse login(LoginRequest request) {
 
         Authentication authentication =
@@ -60,23 +62,21 @@ public class AuthenticationService {
 
         String email = authentication.getName();
 
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new IllegalStateException(
+                                "Authenticated user not found")
+                );
+
         String accessToken =
                 jwtService.generateAccessToken(email);
 
         String refreshToken =
                 refreshTokenService.generateRefreshToken();
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new IllegalStateException("Authenticated user not found")
-                );
-
-        String refreshTokenHash =
-                refreshTokenService.hashToken(refreshToken);
-
         RefreshToken tokenEntity = new RefreshToken(
                 user,
-                refreshTokenHash,
+                refreshTokenService.hashToken(refreshToken),
                 Instant.now().plusMillis(refreshTokenExpiration)
         );
 
@@ -89,5 +89,58 @@ public class AuthenticationService {
                 accessTokenExpiration / 1000
         );
     }
-}
 
+    @Transactional
+    public LoginResponse refresh(String rawRefreshToken) {
+
+        RefreshToken oldToken =
+                refreshTokenService.validateAndGetToken(
+                        rawRefreshToken);
+
+        User user = oldToken.getUser();
+
+        // Prevent disabled users from refreshing their tokens.
+        if (!user.isEnabled()) {
+            throw new InvalidRefreshTokenException(
+                    "User account is disabled");
+        }
+
+        String email = user.getEmail();
+
+        String newAccessToken =
+                jwtService.generateAccessToken(email);
+
+        String newRefreshToken =
+                refreshTokenService.generateRefreshToken();
+
+        RefreshToken replacementToken = new RefreshToken(
+                user,
+                refreshTokenService.hashToken(newRefreshToken),
+                Instant.now().plusMillis(refreshTokenExpiration)
+        );
+
+        refreshTokenRepository.save(replacementToken);
+
+        oldToken.setRevokedAt(Instant.now());
+        oldToken.setReplacedBy(replacementToken);
+
+        refreshTokenRepository.save(oldToken);
+
+        return new LoginResponse(
+                newAccessToken,
+                newRefreshToken,
+                "Bearer",
+                accessTokenExpiration / 1000
+        );
+    }
+
+    @Transactional
+    public void logout(String rawRefreshToken) {
+
+        RefreshToken refreshToken =
+                refreshTokenService.validateAndGetToken(
+                        rawRefreshToken);
+
+        refreshTokenService.revokeToken(refreshToken);
+    }
+}

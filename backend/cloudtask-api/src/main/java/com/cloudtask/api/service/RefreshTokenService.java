@@ -2,6 +2,7 @@
 package com.cloudtask.api.service;
 
 import com.cloudtask.api.entity.RefreshToken;
+import com.cloudtask.api.exception.InvalidRefreshTokenException;
 import com.cloudtask.api.repository.RefreshTokenRepository;
 import org.springframework.stereotype.Service;
 
@@ -45,19 +46,28 @@ public class RefreshTokenService {
     }
 
     public RefreshToken validateAndGetToken(String rawToken) {
+
+        if (rawToken == null || rawToken.isBlank()) {
+            throw new InvalidRefreshTokenException(
+                    "Invalid refresh token");
+        }
+
         String tokenHash = hashToken(rawToken);
 
         RefreshToken storedToken = refreshTokenRepository
                 .findByTokenHash(tokenHash)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Invalid refresh token"));
+                        new InvalidRefreshTokenException(
+                                "Invalid refresh token"));
 
         if (storedToken.isRevoked()) {
-            throw new IllegalArgumentException("Refresh token has been revoked");
+            throw new InvalidRefreshTokenException(
+                    "Refresh token has been revoked");
         }
 
         if (storedToken.isExpired()) {
-            throw new IllegalArgumentException("Refresh token has expired");
+            throw new InvalidRefreshTokenException(
+                    "Refresh token has expired");
         }
 
         return storedToken;
@@ -68,4 +78,3 @@ public class RefreshTokenService {
         refreshTokenRepository.save(token);
     }
 }
-

@@ -72,6 +72,28 @@ public class TaskService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<TaskResponse> getMyTasks(
+            String userEmail,
+            String status,
+            String priority,
+            UUID assigneeId) {
+
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "User not found"));
+
+        return taskRepository.findTasksWithFilters(
+                        user.getId(),
+                        status,
+                        priority,
+                        assigneeId
+                )
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
 @Transactional
 public TaskResponse updateTaskStatus(
         UUID taskId,

@@ -37,10 +37,16 @@ public class TaskController {
 
     @GetMapping
     public List<TaskResponse> getMyTasks(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String priority,
+            @RequestParam(required = false) UUID assigneeId,
             Authentication authentication) {
 
         return taskService.getMyTasks(
-                authentication.getName()
+                authentication.getName(),
+                status,
+                priority,
+                assigneeId
         );
     }
 
