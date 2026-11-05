@@ -1,0 +1,765 @@
+
+#root {
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+/* =========================
+   Main application layout
+========================= */
+
+.app-container {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* =========================
+   Branding panel
+========================= */
+
+.brand-panel {
+  background: #172554;
+  color: white;
+  padding: 42px 9%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.brand,
+.mobile-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 23px;
+  font-weight: 750;
+  letter-spacing: -0.7px;
+}
+
+.brand-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: #6366f1;
+  color: white;
+  font-size: 23px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.brand-content {
+  max-width: 510px;
+  margin: auto 0;
+  padding: 60px 0;
+}
+
+.eyebrow {
+  color: #818cf8;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.brand-content h1 {
+  font-size: clamp(38px, 4vw, 58px);
+  line-height: 1.12;
+  letter-spacing: -2px;
+  margin: 22px 0;
+}
+
+.brand-content p {
+  color: #cbd5e1;
+  line-height: 1.8;
+  font-size: 16px;
+  max-width: 440px;
+}
+
+.feature-list {
+  display: grid;
+  gap: 18px;
+  margin-top: 42px;
+  color: #e0e7ff;
+  font-size: 14px;
+}
+
+.brand-footer {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+/* =========================
+   Authentication
+========================= */
+
+.auth-panel {
+  background: #f8fafc;
+  display: grid;
+  place-items: center;
+  padding: 40px 24px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 430px;
+}
+
+.mobile-brand {
+  display: none;
+  margin-bottom: 45px;
+  color: #172554;
+}
+
+.auth-heading {
+  margin-bottom: 30px;
+}
+
+.auth-heading h2 {
+  color: #0f172a;
+  font-size: 29px;
+  letter-spacing: -1px;
+  margin: 12px 0;
+}
+
+.auth-heading p {
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 5px;
+  background: #e9eef5;
+  border-radius: 10px;
+  margin-bottom: 28px;
+}
+
+.auth-tabs button {
+  border: 0;
+  padding: 12px;
+  border-radius: 7px;
+  background: transparent;
+  color: #64748b;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.auth-tabs button.active {
+  background: white;
+  color: #4338ca;
+  box-shadow: 0 1px 4px #00000012;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 650;
+  margin-bottom: 8px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+  color: #0f172a;
+  font-size: 14px;
+  outline: none;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px #6366f120;
+}
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 4px 0 24px;
+  font-size: 12px;
+}
+
+.remember-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #475569;
+}
+
+.forgot-password {
+  color: #4f46e5;
+}
+
+.submit-button {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 15px;
+  border: 0;
+  border-radius: 8px;
+  background: #4f46e5;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.submit-button:hover {
+  background: #4338ca;
+}
+
+.submit-button span {
+  font-size: 18px;
+}
+
+.submit-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.switch-text {
+  text-align: center;
+  margin-top: 28px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.switch-text button {
+  border: 0;
+  background: transparent;
+  color: #4f46e5;
+  font-weight: 700;
+  cursor: pointer;
+  margin-left: 5px;
+}
+
+/* =========================
+   Messages and feedback
+========================= */
+
+.form-message {
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.error-message {
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.success-message {
+  color: #166534;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+/* =========================
+   Dashboard
+========================= */
+
+.dashboard {
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.dashboard-header {
+  min-height: 76px;
+  padding: 14px 6%;
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.signed-in-label {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.logout-button {
+  padding: 10px 17px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+  color: #334155;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.logout-button:hover {
+  background: #f1f5f9;
+}
+
+.dashboard-content {
+  width: min(1100px, 90%);
+  margin: 0 auto;
+  padding: 48px 0;
+}
+
+.dashboard-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.dashboard-title-row h1 {
+  margin: 10px 0;
+  color: #0f172a;
+  font-size: 34px;
+  letter-spacing: -1px;
+}
+
+.dashboard-title-row p {
+  color: #64748b;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.create-task-button {
+  background: #4f46e5;
+  color: white;
+  border: 0;
+  border-radius: 8px;
+  padding: 13px 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.create-task-button:hover {
+  background: #4338ca;
+}
+
+/* =========================
+   Task creation form
+========================= */
+
+.create-task-form {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 26px;
+  margin-bottom: 28px;
+}
+
+.create-task-form h2 {
+  margin-top: 0;
+  color: #0f172a;
+}
+
+.create-task-form textarea {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  resize: vertical;
+  color: #0f172a;
+  background: white;
+}
+
+.create-task-form textarea:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px #6366f120;
+}
+
+.create-task-form input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #0f172a;
+  background: white;
+}
+
+.create-task-form input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px #6366f120;
+}
+
+/* =========================
+   Task summary
+========================= */
+
+.task-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.summary-card {
+  padding: 20px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.summary-card span {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.summary-card strong {
+  color: #0f172a;
+  font-size: 27px;
+}
+
+/* =========================
+   Filters
+========================= */
+
+.task-toolbar {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.task-toolbar > div,
+.task-status-control {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.task-toolbar label,
+.task-status-control label {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.task-toolbar select,
+.task-status-control select {
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+  color: #334155;
+  cursor: pointer;
+}
+
+.task-toolbar select:focus,
+.task-status-control select:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px #6366f120;
+}
+
+/* =========================
+   Task list and cards
+========================= */
+
+.task-list {
+  display: grid;
+  gap: 14px;
+}
+
+.task-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 11px;
+  padding: 22px;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.task-card:hover {
+  border-color: #c7d2fe;
+  box-shadow: 0 4px 14px #0f172a08;
+}
+
+.task-card-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.task-card h3 {
+  margin: 0 0 9px;
+  color: #0f172a;
+  font-size: 17px;
+}
+
+.task-card p {
+  margin: 0 0 14px;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.task-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.priority {
+  padding: 5px 9px;
+  border-radius: 20px;
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 700;
+}
+
+.priority-high {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.priority-medium {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.priority-low {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.task-status-control {
+  min-width: 140px;
+  flex-shrink: 0;
+}
+
+/* =========================
+   Empty state and errors
+========================= */
+
+.empty-state {
+  padding: 55px 20px;
+  text-align: center;
+  background: white;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  color: #64748b;
+}
+
+.empty-state h2 {
+  color: #334155;
+  margin-top: 0;
+}
+
+.task-error {
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* =========================
+   Pagination
+========================= */
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-top: 28px;
+  color: #475569;
+  font-size: 13px;
+}
+
+.pagination button {
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+  color: #334155;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.pagination button:hover:not(:disabled) {
+  background: #eef2ff;
+}
+
+.pagination button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* =========================
+   Tablet responsiveness
+========================= */
+
+@media (max-width: 800px) {
+  .app-container {
+    grid-template-columns: 1fr;
+  }
+
+  .brand-panel {
+    display: none;
+  }
+
+  .mobile-brand {
+    display: flex;
+  }
+
+  .auth-panel {
+    min-height: 100vh;
+  }
+}
+
+/* =========================
+   Mobile responsiveness
+========================= */
+
+@media (max-width: 650px) {
+  .auth-panel {
+    padding: 28px 20px;
+  }
+
+  .mobile-brand {
+    margin-bottom: 35px;
+  }
+
+  .dashboard-header {
+    padding: 14px 5%;
+  }
+
+  .header-actions {
+    gap: 10px;
+  }
+
+  .signed-in-label {
+    display: none;
+  }
+
+  .dashboard-content {
+    width: 90%;
+    padding: 30px 0;
+  }
+
+  .dashboard-title-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dashboard-title-row h1 {
+    font-size: 28px;
+  }
+
+  .create-task-button {
+    width: 100%;
+  }
+
+  .create-task-form {
+    padding: 20px;
+  }
+
+  .task-summary {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .summary-card {
+    padding: 16px;
+  }
+
+  .summary-card strong {
+    font-size: 23px;
+  }
+
+  .task-card {
+    padding: 18px;
+  }
+
+  .task-card-main {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .task-status-control {
+    width: 100%;
+  }
+
+  .task-status-control select {
+    width: 100%;
+  }
+
+  .task-toolbar {
+    flex-direction: column;
+  }
+
+  .task-toolbar select {
+    width: 100%;
+  }
+
+  .pagination {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+}
+
+/* =========================
+   Small mobile screens
+========================= */
+
+@media (max-width: 380px) {
+  .dashboard-title-row h1 {
+    font-size: 25px;
+  }
+
+  .task-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-heading h2 {
+    font-size: 25px;
+  }
+}

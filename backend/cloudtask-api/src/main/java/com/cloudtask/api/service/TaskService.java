@@ -1,3 +1,4 @@
+
 package com.cloudtask.api.service;
 
 import com.cloudtask.api.dto.CreateTaskRequest;
@@ -8,12 +9,16 @@ import com.cloudtask.api.entity.UserRole;
 import com.cloudtask.api.repository.TaskRepository;
 import com.cloudtask.api.repository.UserRepository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -21,6 +26,17 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
+
+    private static final int MAX_PAGE_SIZE = 100;
+
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
+            "createdAt",
+            "updatedAt",
+            "dueDate",
+            "title",
+            "priority",
+            "status"
+    );
 
     public TaskService(
             TaskRepository taskRepository,
@@ -59,24 +75,43 @@ public class TaskService {
     }
 
     @Transactional(readOnly = true)
-    public List<TaskResponse> getMyTasks(String userEmail) {
-
-        User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "User not found"));
-
-        return taskRepository.findAllByCreatedBy_Id(user.getId())
-                .stream()
-                .map(this::toResponse)
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public List<TaskResponse> getMyTasks(
+    public Page<TaskResponse> getMyTasks(
             String userEmail,
             String status,
             String priority,
-            UUID assigneeId) {
+            UUID assigneeId,
+            int page,
+            int size,
+            String sortBy,
+            String sortDirection) {
+
+        if (page < 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Page number cannot be negative");
+        }
+
+        if (size < 1 || size > MAX_PAGE_SIZE) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Page size must be between 1 and " + MAX_PAGE_SIZE);
+        }
+
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid sort field: " + sortBy);
+        }
+
+        Sort.Direction direction;
+
+        try {
+            direction = Sort.Direction.fromString(sortDirection);
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Sort direction must be ASC or DESC");
+        }
 
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -84,15 +119,20 @@ public class TaskService {
 
         boolean isAdmin = user.getRole() == UserRole.ADMIN;
 
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(direction, sortBy)
+        );
+
         return taskRepository.findTasksWithFilters(
                         user.getId(),
                         isAdmin,
                         status,
                         priority,
-                        assigneeId)
-                .stream()
-                .map(this::toResponse)
-                .toList();
+                        assigneeId,
+                        pageable)
+                .map(this::toResponse);
     }
 
     @Transactional

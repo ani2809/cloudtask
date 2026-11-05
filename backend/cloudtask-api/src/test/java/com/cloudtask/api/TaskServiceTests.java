@@ -18,6 +18,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -74,9 +78,7 @@ class TaskServiceTests {
                 });
 
         TaskResponse response = taskService.createTask(
-                request,
-                "test@cloudtask.com"
-        );
+                request, "test@cloudtask.com");
 
         assertNotNull(response);
         assertEquals("Build authentication API", response.title());
@@ -100,21 +102,17 @@ class TaskServiceTests {
                 .thenReturn(Optional.of(testUser));
 
         when(taskRepository.findTasksWithFilters(
-                testUserId, false, null, null, null))
-                .thenReturn(List.of(task));
+                eq(testUserId), eq(false), isNull(), isNull(), isNull(),
+                any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(task)));
 
-        List<TaskResponse> responses = taskService.getMyTasks(
-                "test@cloudtask.com", null, null, null
-        );
+        Page<TaskResponse> responses = getTasks(
+                "test@cloudtask.com", null, null, null);
 
-        assertEquals(1, responses.size());
-        assertEquals("Build task API", responses.get(0).title());
-        assertEquals("TODO", responses.get(0).status());
-        assertEquals(testUserId, responses.get(0).createdBy());
-
-        verify(taskRepository).findTasksWithFilters(
-                testUserId, false, null, null, null
-        );
+        assertEquals(1, responses.getTotalElements());
+        assertEquals("Build task API", responses.getContent().get(0).title());
+        assertEquals("TODO", responses.getContent().get(0).status());
+        assertEquals(testUserId, responses.getContent().get(0).createdBy());
     }
 
     @Test
@@ -129,19 +127,15 @@ class TaskServiceTests {
                 .thenReturn(Optional.of(testUser));
 
         when(taskRepository.findTasksWithFilters(
-                testUserId, false, "TODO", null, null))
-                .thenReturn(List.of(task));
+                eq(testUserId), eq(false), eq("TODO"), isNull(), isNull(),
+                any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(task)));
 
-        List<TaskResponse> responses = taskService.getMyTasks(
-                "test@cloudtask.com", "TODO", null, null
-        );
+        Page<TaskResponse> responses = getTasks(
+                "test@cloudtask.com", "TODO", null, null);
 
-        assertEquals(1, responses.size());
-        assertEquals("TODO", responses.get(0).status());
-
-        verify(taskRepository).findTasksWithFilters(
-                testUserId, false, "TODO", null, null
-        );
+        assertEquals(1, responses.getTotalElements());
+        assertEquals("TODO", responses.getContent().get(0).status());
     }
 
     @Test
@@ -157,19 +151,14 @@ class TaskServiceTests {
                 .thenReturn(Optional.of(testUser));
 
         when(taskRepository.findTasksWithFilters(
-                testUserId, false, null, "HIGH", null))
-                .thenReturn(List.of(task));
+                eq(testUserId), eq(false), isNull(), eq("HIGH"), isNull(),
+                any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(task)));
 
-        List<TaskResponse> responses = taskService.getMyTasks(
-                "test@cloudtask.com", null, "HIGH", null
-        );
+        Page<TaskResponse> responses = getTasks(
+                "test@cloudtask.com", null, "HIGH", null);
 
-        assertEquals(1, responses.size());
-        assertEquals("HIGH", responses.get(0).priority());
-
-        verify(taskRepository).findTasksWithFilters(
-                testUserId, false, null, "HIGH", null
-        );
+        assertEquals("HIGH", responses.getContent().get(0).priority());
     }
 
     @Test
@@ -190,19 +179,14 @@ class TaskServiceTests {
                 .thenReturn(Optional.of(testUser));
 
         when(taskRepository.findTasksWithFilters(
-                testUserId, false, null, null, assigneeId))
-                .thenReturn(List.of(task));
+                eq(testUserId), eq(false), isNull(), isNull(), eq(assigneeId),
+                any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(task)));
 
-        List<TaskResponse> responses = taskService.getMyTasks(
-                "test@cloudtask.com", null, null, assigneeId
-        );
+        Page<TaskResponse> responses = getTasks(
+                "test@cloudtask.com", null, null, assigneeId);
 
-        assertEquals(1, responses.size());
-        assertEquals(assigneeId, responses.get(0).assignedTo());
-
-        verify(taskRepository).findTasksWithFilters(
-                testUserId, false, null, null, assigneeId
-        );
+        assertEquals(assigneeId, responses.getContent().get(0).assignedTo());
     }
 
     @Test
@@ -224,27 +208,21 @@ class TaskServiceTests {
                 .thenReturn(Optional.of(testUser));
 
         when(taskRepository.findTasksWithFilters(
-                testUserId, false, "TODO", "HIGH", assigneeId))
-                .thenReturn(List.of(task));
+                eq(testUserId), eq(false), eq("TODO"), eq("HIGH"),
+                eq(assigneeId), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(task)));
 
-        List<TaskResponse> responses = taskService.getMyTasks(
-                "test@cloudtask.com", "TODO", "HIGH", assigneeId
-        );
+        Page<TaskResponse> responses = getTasks(
+                "test@cloudtask.com", "TODO", "HIGH", assigneeId);
 
-        assertEquals(1, responses.size());
-        assertEquals("TODO", responses.get(0).status());
-        assertEquals("HIGH", responses.get(0).priority());
-        assertEquals(assigneeId, responses.get(0).assignedTo());
-
-        verify(taskRepository).findTasksWithFilters(
-                testUserId, false, "TODO", "HIGH", assigneeId
-        );
+        assertEquals(1, responses.getTotalElements());
+        assertEquals("TODO", responses.getContent().get(0).status());
+        assertEquals("HIGH", responses.getContent().get(0).priority());
+        assertEquals(assigneeId, responses.getContent().get(0).assignedTo());
     }
 
     @Test
     void adminShouldRetrieveAllTasks() {
-
-        when(testUser.getId()).thenReturn(testUserId);
 
         User admin = mock(User.class);
         UUID adminId = UUID.randomUUID();
@@ -258,18 +236,17 @@ class TaskServiceTests {
                 .thenReturn(Optional.of(admin));
 
         when(taskRepository.findTasksWithFilters(
-                eq(adminId), eq(true), isNull(), isNull(), isNull()))
-                .thenReturn(List.of(task));
+                eq(adminId), eq(true), isNull(), isNull(), isNull(),
+                any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(task)));
 
-        List<TaskResponse> responses = taskService.getMyTasks(
-                "admin@cloudtask.com", null, null, null
-        );
+        Page<TaskResponse> responses = getTasks(
+                "admin@cloudtask.com", null, null, null);
 
-        assertEquals(1, responses.size());
-
+        assertEquals(1, responses.getTotalElements());
         verify(taskRepository).findTasksWithFilters(
-                adminId, true, null, null, null
-        );
+                eq(adminId), eq(true), isNull(), isNull(), isNull(),
+                any(Pageable.class));
     }
 
     @Test
@@ -298,11 +275,9 @@ class TaskServiceTests {
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         TaskResponse response = taskService.updateTaskStatus(
-                task.getId(), "DONE", "test@cloudtask.com"
-        );
+                task.getId(), "DONE", "test@cloudtask.com");
 
         assertEquals("DONE", response.status());
-
         verify(taskRepository).save(task);
     }
 
@@ -332,11 +307,9 @@ class TaskServiceTests {
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         TaskResponse response = taskService.updateTaskStatus(
-                task.getId(), "DONE", "admin@cloudtask.com"
-        );
+                task.getId(), "DONE", "admin@cloudtask.com");
 
         assertEquals("DONE", response.status());
-
         verify(taskRepository).save(task);
     }
 
@@ -346,10 +319,8 @@ class TaskServiceTests {
         when(testUser.getId()).thenReturn(testUserId);
         when(testUser.getRole()).thenReturn(UserRole.USER);
 
-        UUID anotherUserId = UUID.randomUUID();
-
         User anotherUser = mock(User.class);
-        when(anotherUser.getId()).thenReturn(anotherUserId);
+        when(anotherUser.getId()).thenReturn(UUID.randomUUID());
 
         Task task = new Task();
         task.setId(UUID.randomUUID());
@@ -365,13 +336,112 @@ class TaskServiceTests {
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
                 () -> taskService.updateTaskStatus(
-                        task.getId(), "DONE", "test@cloudtask.com"
-                )
-        );
+                        task.getId(), "DONE", "test@cloudtask.com"));
 
         assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
-
         verify(taskRepository, never()).save(any(Task.class));
+    }
+
+    @Test
+    void getMyTasksShouldSupportPagination() {
+
+        when(testUser.getId()).thenReturn(testUserId);
+        when(testUser.getRole()).thenReturn(UserRole.USER);
+
+        when(userRepository.findByEmail("test@cloudtask.com"))
+                .thenReturn(Optional.of(testUser));
+
+        when(taskRepository.findTasksWithFilters(
+                eq(testUserId), eq(false), isNull(), isNull(), isNull(),
+                any(Pageable.class)))
+                .thenReturn(new PageImpl<>(
+                        List.of(createTestTask()),
+                        PageRequest.of(1, 5),
+                        12));
+
+        Page<TaskResponse> result = taskService.getMyTasks(
+                "test@cloudtask.com",
+                null, null, null,
+                1, 5, "createdAt", "DESC");
+
+        assertEquals(1, result.getNumber());
+        assertEquals(5, result.getSize());
+        assertEquals(12, result.getTotalElements());
+        assertEquals(3, result.getTotalPages());
+    }
+
+    @Test
+    void getMyTasksShouldRejectNegativePage() {
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> taskService.getMyTasks(
+                        "test@cloudtask.com",
+                        null, null, null,
+                        -1, 10, "createdAt", "DESC"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+        verifyNoInteractions(userRepository, taskRepository);
+    }
+
+    @Test
+    void getMyTasksShouldRejectInvalidPageSize() {
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> taskService.getMyTasks(
+                        "test@cloudtask.com",
+                        null, null, null,
+                        0, 101, "createdAt", "DESC"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+        verifyNoInteractions(userRepository, taskRepository);
+    }
+
+    @Test
+    void getMyTasksShouldRejectInvalidSortField() {
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> taskService.getMyTasks(
+                        "test@cloudtask.com",
+                        null, null, null,
+                        0, 10, "passwordHash", "DESC"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+        verifyNoInteractions(userRepository, taskRepository);
+    }
+
+    @Test
+    void getMyTasksShouldRejectInvalidSortDirection() {
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> taskService.getMyTasks(
+                        "test@cloudtask.com",
+                        null, null, null,
+                        0, 10, "createdAt", "SIDEWAYS"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+        verifyNoInteractions(userRepository, taskRepository);
+    }
+
+    private Page<TaskResponse> getTasks(
+            String email,
+            String status,
+            String priority,
+            UUID assigneeId) {
+
+        return taskService.getMyTasks(
+                email,
+                status,
+                priority,
+                assigneeId,
+                0,
+                10,
+                "createdAt",
+                "DESC"
+        );
     }
 
     private Task createTestTask() {

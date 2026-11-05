@@ -14,11 +14,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -51,8 +52,6 @@ class TaskControllerIntegrationTests {
 
     private final String testEmail = "test@cloudtask.com";
 
-    // TASK API TESTS
-
     @Test
     void createTaskShouldReturnCreated() throws Exception {
 
@@ -65,7 +64,7 @@ class TaskControllerIntegrationTests {
                 "Implement JWT authentication",
                 "TODO",
                 "MEDIUM",
-                LocalDate.now().plusDays(7),
+                null,
                 userId,
                 null,
                 LocalDateTime.now(),
@@ -86,12 +85,13 @@ class TaskControllerIntegrationTests {
                                 }
                                 """))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.title").value("Build authentication API"))
+                .andExpect(jsonPath("$.title")
+                        .value("Build authentication API"))
                 .andExpect(jsonPath("$.status").value("TODO"));
     }
 
     @Test
-    void getMyTasksShouldReturnTaskList() throws Exception {
+    void getMyTasksShouldReturnPaginatedResults() throws Exception {
 
         UUID taskId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
@@ -109,15 +109,76 @@ class TaskControllerIntegrationTests {
                 LocalDateTime.now()
         );
 
-        when(taskService.getMyTasks(testEmail, null, null, null))
-                .thenReturn(List.of(response));
+        when(taskService.getMyTasks(
+                eq(testEmail),
+                isNull(),
+                isNull(),
+                isNull(),
+                eq(0),
+                eq(10),
+                eq("createdAt"),
+                eq("DESC")
+        )).thenReturn(new PageImpl<>(
+                List.of(response),
+                PageRequest.of(0, 10),
+                1
+        ));
 
         mockMvc.perform(get("/api/tasks")
                         .with(user(testEmail)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].title")
-                        .value("Build authentication API"));
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].title")
+                        .value("Build authentication API"))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.size").value(10));
+    }
+
+    @Test
+    void getMyTasksShouldAcceptCustomPaginationAndSorting() throws Exception {
+
+        when(taskService.getMyTasks(
+                eq(testEmail),
+                eq("TODO"),
+                eq("HIGH"),
+                isNull(),
+                eq(1),
+                eq(5),
+                eq("title"),
+                eq("ASC")
+        )).thenReturn(new PageImpl<>(
+                List.of(),
+                PageRequest.of(1, 5),
+                0
+        ));
+
+        mockMvc.perform(get("/api/tasks")
+                        .with(user(testEmail))
+                        .param("status", "TODO")
+                        .param("priority", "HIGH")
+                        .param("page", "1")
+                        .param("size", "5")
+                        .param("sortBy", "title")
+                        .param("sortDirection", "ASC"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(0))
+                .andExpect(jsonPath("$.number").value(1))
+                .andExpect(jsonPath("$.size").value(5))
+                .andExpect(jsonPath("$.totalElements").value(0))
+                .andExpect(jsonPath("$.totalPages").value(0));
+
+        verify(taskService).getMyTasks(
+                testEmail,
+                "TODO",
+                "HIGH",
+                null,
+                1,
+                5,
+                "title",
+                "ASC"
+        );
     }
 
     @Test
@@ -185,10 +246,8 @@ class TaskControllerIntegrationTests {
                 .andExpect(jsonPath("$.message")
                         .value("Authentication required"));
 
-        verify(taskService, never()).getMyTasks(anyString());
+        verifyNoInteractions(taskService);
     }
-
-    // ROLE-BASED ACCESS CONTROL TESTS
 
     @Test
     void userShouldBeForbiddenFromAdminEndpoints() throws Exception {

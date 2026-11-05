@@ -2,18 +2,15 @@
 package com.cloudtask.api.repository;
 
 import com.cloudtask.api.entity.Task;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
 import java.util.UUID;
 
 public interface TaskRepository extends JpaRepository<Task, UUID> {
-
-    List<Task> findAllByCreatedBy_Id(UUID userId);
-
-    List<Task> findAllByAssignedTo_Id(UUID userId);
 
     @Query("""
             SELECT t FROM Task t
@@ -27,11 +24,12 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
             AND (:priority IS NULL OR t.priority = :priority)
             AND (:assigneeId IS NULL OR assignee.id = :assigneeId)
             """)
-    List<Task> findTasksWithFilters(
+    Page<Task> findTasksWithFilters(
             @Param("userId") UUID userId,
             @Param("isAdmin") boolean isAdmin,
             @Param("status") String status,
             @Param("priority") String priority,
-            @Param("assigneeId") UUID assigneeId
+            @Param("assigneeId") UUID assigneeId,
+            Pageable pageable
     );
 }
