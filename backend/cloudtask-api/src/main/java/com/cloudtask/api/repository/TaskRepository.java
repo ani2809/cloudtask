@@ -17,13 +17,19 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
 
     @Query("""
             SELECT t FROM Task t
-            WHERE t.createdBy.id = :userId
-              AND (:status IS NULL OR t.status = :status)
-              AND (:priority IS NULL OR t.priority = :priority)
-              AND (:assigneeId IS NULL OR t.assignedTo.id = :assigneeId)
+            LEFT JOIN t.assignedTo assignee
+            WHERE (
+                :isAdmin = true
+                OR t.createdBy.id = :userId
+                OR assignee.id = :userId
+            )
+            AND (:status IS NULL OR t.status = :status)
+            AND (:priority IS NULL OR t.priority = :priority)
+            AND (:assigneeId IS NULL OR assignee.id = :assigneeId)
             """)
     List<Task> findTasksWithFilters(
             @Param("userId") UUID userId,
+            @Param("isAdmin") boolean isAdmin,
             @Param("status") String status,
             @Param("priority") String priority,
             @Param("assigneeId") UUID assigneeId

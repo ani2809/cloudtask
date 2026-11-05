@@ -5,6 +5,7 @@ import com.cloudtask.api.dto.CreateTaskRequest;
 import com.cloudtask.api.dto.TaskResponse;
 import com.cloudtask.api.entity.Task;
 import com.cloudtask.api.entity.User;
+import com.cloudtask.api.entity.UserRole;
 import com.cloudtask.api.repository.TaskRepository;
 import com.cloudtask.api.repository.UserRepository;
 import com.cloudtask.api.service.TaskService;
@@ -26,7 +27,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -47,14 +48,13 @@ class TaskServiceTests {
     @BeforeEach
     void setUp() {
         testUserId = UUID.randomUUID();
-
         testUser = mock(User.class);
-
-        when(testUser.getId()).thenReturn(testUserId);
     }
 
     @Test
     void createTaskShouldSaveTaskSuccessfully() {
+
+        when(testUser.getId()).thenReturn(testUserId);
 
         CreateTaskRequest request = new CreateTaskRequest(
                 "Build authentication API",
@@ -85,11 +85,14 @@ class TaskServiceTests {
         assertEquals("MEDIUM", response.priority());
         assertEquals(testUserId, response.createdBy());
 
-        verify(taskRepository, times(1)).save(any(Task.class));
+        verify(taskRepository).save(any(Task.class));
     }
 
     @Test
     void getMyTasksShouldReturnTasksCreatedByUser() {
+
+        when(testUser.getId()).thenReturn(testUserId);
+        when(testUser.getRole()).thenReturn(UserRole.USER);
 
         Task task = createTestTask();
 
@@ -97,16 +100,12 @@ class TaskServiceTests {
                 .thenReturn(Optional.of(testUser));
 
         when(taskRepository.findTasksWithFilters(
-                testUserId, null, null, null))
+                testUserId, false, null, null, null))
                 .thenReturn(List.of(task));
 
-        List<TaskResponse> responses =
-                taskService.getMyTasks(
-                        "test@cloudtask.com",
-                        null,
-                        null,
-                        null
-                );
+        List<TaskResponse> responses = taskService.getMyTasks(
+                "test@cloudtask.com", null, null, null
+        );
 
         assertEquals(1, responses.size());
         assertEquals("Build task API", responses.get(0).title());
@@ -114,39 +113,43 @@ class TaskServiceTests {
         assertEquals(testUserId, responses.get(0).createdBy());
 
         verify(taskRepository).findTasksWithFilters(
-                testUserId, null, null, null);
+                testUserId, false, null, null, null
+        );
     }
 
     @Test
     void getMyTasksShouldFilterByStatus() {
 
+        when(testUser.getId()).thenReturn(testUserId);
+        when(testUser.getRole()).thenReturn(UserRole.USER);
+
         Task task = createTestTask();
 
         when(userRepository.findByEmail("test@cloudtask.com"))
                 .thenReturn(Optional.of(testUser));
 
         when(taskRepository.findTasksWithFilters(
-                testUserId, "TODO", null, null))
+                testUserId, false, "TODO", null, null))
                 .thenReturn(List.of(task));
 
-        List<TaskResponse> responses =
-                taskService.getMyTasks(
-                        "test@cloudtask.com",
-                        "TODO",
-                        null,
-                        null
-                );
+        List<TaskResponse> responses = taskService.getMyTasks(
+                "test@cloudtask.com", "TODO", null, null
+        );
 
         assertEquals(1, responses.size());
         assertEquals("TODO", responses.get(0).status());
 
         verify(taskRepository).findTasksWithFilters(
-                testUserId, "TODO", null, null);
+                testUserId, false, "TODO", null, null
+        );
     }
 
     @Test
     void getMyTasksShouldFilterByPriority() {
 
+        when(testUser.getId()).thenReturn(testUserId);
+        when(testUser.getRole()).thenReturn(UserRole.USER);
+
         Task task = createTestTask();
         task.setPriority("HIGH");
 
@@ -154,26 +157,26 @@ class TaskServiceTests {
                 .thenReturn(Optional.of(testUser));
 
         when(taskRepository.findTasksWithFilters(
-                testUserId, null, "HIGH", null))
+                testUserId, false, null, "HIGH", null))
                 .thenReturn(List.of(task));
 
-        List<TaskResponse> responses =
-                taskService.getMyTasks(
-                        "test@cloudtask.com",
-                        null,
-                        "HIGH",
-                        null
-                );
+        List<TaskResponse> responses = taskService.getMyTasks(
+                "test@cloudtask.com", null, "HIGH", null
+        );
 
         assertEquals(1, responses.size());
         assertEquals("HIGH", responses.get(0).priority());
 
         verify(taskRepository).findTasksWithFilters(
-                testUserId, null, "HIGH", null);
+                testUserId, false, null, "HIGH", null
+        );
     }
 
     @Test
     void getMyTasksShouldFilterByAssignee() {
+
+        when(testUser.getId()).thenReturn(testUserId);
+        when(testUser.getRole()).thenReturn(UserRole.USER);
 
         UUID assigneeId = UUID.randomUUID();
 
@@ -187,26 +190,26 @@ class TaskServiceTests {
                 .thenReturn(Optional.of(testUser));
 
         when(taskRepository.findTasksWithFilters(
-                testUserId, null, null, assigneeId))
+                testUserId, false, null, null, assigneeId))
                 .thenReturn(List.of(task));
 
-        List<TaskResponse> responses =
-                taskService.getMyTasks(
-                        "test@cloudtask.com",
-                        null,
-                        null,
-                        assigneeId
-                );
+        List<TaskResponse> responses = taskService.getMyTasks(
+                "test@cloudtask.com", null, null, assigneeId
+        );
 
         assertEquals(1, responses.size());
         assertEquals(assigneeId, responses.get(0).assignedTo());
 
         verify(taskRepository).findTasksWithFilters(
-                testUserId, null, null, assigneeId);
+                testUserId, false, null, null, assigneeId
+        );
     }
 
     @Test
     void getMyTasksShouldSupportCombinedFilters() {
+
+        when(testUser.getId()).thenReturn(testUserId);
+        when(testUser.getRole()).thenReturn(UserRole.USER);
 
         UUID assigneeId = UUID.randomUUID();
 
@@ -221,16 +224,12 @@ class TaskServiceTests {
                 .thenReturn(Optional.of(testUser));
 
         when(taskRepository.findTasksWithFilters(
-                testUserId, "TODO", "HIGH", assigneeId))
+                testUserId, false, "TODO", "HIGH", assigneeId))
                 .thenReturn(List.of(task));
 
-        List<TaskResponse> responses =
-                taskService.getMyTasks(
-                        "test@cloudtask.com",
-                        "TODO",
-                        "HIGH",
-                        assigneeId
-                );
+        List<TaskResponse> responses = taskService.getMyTasks(
+                "test@cloudtask.com", "TODO", "HIGH", assigneeId
+        );
 
         assertEquals(1, responses.size());
         assertEquals("TODO", responses.get(0).status());
@@ -238,11 +237,114 @@ class TaskServiceTests {
         assertEquals(assigneeId, responses.get(0).assignedTo());
 
         verify(taskRepository).findTasksWithFilters(
-                testUserId, "TODO", "HIGH", assigneeId);
+                testUserId, false, "TODO", "HIGH", assigneeId
+        );
+    }
+
+    @Test
+    void adminShouldRetrieveAllTasks() {
+
+        when(testUser.getId()).thenReturn(testUserId);
+
+        User admin = mock(User.class);
+        UUID adminId = UUID.randomUUID();
+
+        when(admin.getId()).thenReturn(adminId);
+        when(admin.getRole()).thenReturn(UserRole.ADMIN);
+
+        Task task = createTestTask();
+
+        when(userRepository.findByEmail("admin@cloudtask.com"))
+                .thenReturn(Optional.of(admin));
+
+        when(taskRepository.findTasksWithFilters(
+                eq(adminId), eq(true), isNull(), isNull(), isNull()))
+                .thenReturn(List.of(task));
+
+        List<TaskResponse> responses = taskService.getMyTasks(
+                "admin@cloudtask.com", null, null, null
+        );
+
+        assertEquals(1, responses.size());
+
+        verify(taskRepository).findTasksWithFilters(
+                adminId, true, null, null, null
+        );
+    }
+
+    @Test
+    void userShouldBeAbleToUpdateAssignedTask() {
+
+        when(testUser.getId()).thenReturn(testUserId);
+        when(testUser.getRole()).thenReturn(UserRole.USER);
+
+        Task task = new Task();
+        task.setId(UUID.randomUUID());
+        task.setTitle("Assigned task");
+
+        User anotherCreator = mock(User.class);
+        when(anotherCreator.getId()).thenReturn(UUID.randomUUID());
+
+        task.setCreatedBy(anotherCreator);
+        task.setAssignedTo(testUser);
+
+        when(userRepository.findByEmail("test@cloudtask.com"))
+                .thenReturn(Optional.of(testUser));
+
+        when(taskRepository.findById(task.getId()))
+                .thenReturn(Optional.of(task));
+
+        when(taskRepository.save(any(Task.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        TaskResponse response = taskService.updateTaskStatus(
+                task.getId(), "DONE", "test@cloudtask.com"
+        );
+
+        assertEquals("DONE", response.status());
+
+        verify(taskRepository).save(task);
+    }
+
+    @Test
+    void adminShouldBeAbleToUpdateAnotherUsersTask() {
+
+        User admin = mock(User.class);
+
+        when(admin.getId()).thenReturn(UUID.randomUUID());
+        when(admin.getRole()).thenReturn(UserRole.ADMIN);
+
+        User anotherCreator = mock(User.class);
+        when(anotherCreator.getId()).thenReturn(UUID.randomUUID());
+
+        Task task = new Task();
+        task.setId(UUID.randomUUID());
+        task.setTitle("Private task");
+        task.setCreatedBy(anotherCreator);
+
+        when(userRepository.findByEmail("admin@cloudtask.com"))
+                .thenReturn(Optional.of(admin));
+
+        when(taskRepository.findById(task.getId()))
+                .thenReturn(Optional.of(task));
+
+        when(taskRepository.save(any(Task.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        TaskResponse response = taskService.updateTaskStatus(
+                task.getId(), "DONE", "admin@cloudtask.com"
+        );
+
+        assertEquals("DONE", response.status());
+
+        verify(taskRepository).save(task);
     }
 
     @Test
     void updateTaskStatusShouldRejectAnotherUsersTask() {
+
+        when(testUser.getId()).thenReturn(testUserId);
+        when(testUser.getRole()).thenReturn(UserRole.USER);
 
         UUID anotherUserId = UUID.randomUUID();
 
@@ -263,9 +365,7 @@ class TaskServiceTests {
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
                 () -> taskService.updateTaskStatus(
-                        task.getId(),
-                        "DONE",
-                        "test@cloudtask.com"
+                        task.getId(), "DONE", "test@cloudtask.com"
                 )
         );
 

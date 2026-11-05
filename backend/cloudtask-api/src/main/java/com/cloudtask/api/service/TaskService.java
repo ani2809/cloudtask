@@ -1,12 +1,13 @@
-
 package com.cloudtask.api.service;
 
 import com.cloudtask.api.dto.CreateTaskRequest;
 import com.cloudtask.api.dto.TaskResponse;
 import com.cloudtask.api.entity.Task;
 import com.cloudtask.api.entity.User;
+import com.cloudtask.api.entity.UserRole;
 import com.cloudtask.api.repository.TaskRepository;
 import com.cloudtask.api.repository.UserRepository;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,9 +30,7 @@ public class TaskService {
     }
 
     @Transactional
-    public TaskResponse createTask(
-            CreateTaskRequest request,
-            String userEmail) {
+    public TaskResponse createTask(CreateTaskRequest request, String userEmail) {
 
         User creator = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -83,45 +82,57 @@ public class TaskService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "User not found"));
 
+        boolean isAdmin = user.getRole() == UserRole.ADMIN;
+
         return taskRepository.findTasksWithFilters(
                         user.getId(),
+                        isAdmin,
                         status,
                         priority,
-                        assigneeId
-                )
+                        assigneeId)
                 .stream()
                 .map(this::toResponse)
                 .toList();
     }
 
-@Transactional
-public TaskResponse updateTaskStatus(
-        UUID taskId,
-        String newStatus,
-        String userEmail) {
+    @Transactional
+    public TaskResponse updateTaskStatus(
+            UUID taskId,
+            String newStatus,
+            String userEmail) {
 
-    User user = userRepository.findByEmail(userEmail)
-        .orElseThrow(() -> new ResponseStatusException(
-            HttpStatus.NOT_FOUND, "User not found"));
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "User not found"));
 
-    Task task = taskRepository.findById(taskId)
-        .orElseThrow(() -> new ResponseStatusException(
-            HttpStatus.NOT_FOUND, "Task not found"));
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Task not found"));
 
-    if (!task.getCreatedBy().getId().equals(user.getId())) {
-        throw new ResponseStatusException(
-            HttpStatus.FORBIDDEN,
-            "You are not authorized to update this task");
+        boolean isAdmin = user.getRole() == UserRole.ADMIN;
+
+        boolean isCreator =
+                task.getCreatedBy().getId().equals(user.getId());
+
+        boolean isAssignee =
+                task.getAssignedTo() != null
+                        && task.getAssignedTo().getId().equals(user.getId());
+
+        if (!isAdmin && !isCreator && !isAssignee) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "You are not authorized to update this task");
+        }
+
+        task.setStatus(newStatus);
+
+        Task updatedTask = taskRepository.save(task);
+
+        return toResponse(updatedTask);
     }
 
-    task.setStatus(newStatus);
-
-    Task updatedTask = taskRepository.save(task);
-
-    return toResponse(updatedTask);
-}
-
     private TaskResponse toResponse(Task task) {
+
         return new TaskResponse(
                 task.getId(),
                 task.getTitle(),
