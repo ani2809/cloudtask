@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudtask-config
+  namespace: cloudtask
+data:
+  POSTGRES_DB: cloudtask
+  POSTGRES_USER: cloudtask
+  SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/cloudtask
+  SPRING_DATASOURCE_USERNAME: cloudtask
+  SERVER_PORT: "8080"

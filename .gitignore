@@ -33,3 +33,4 @@ application-secrets.properties
 # Temporary files
 *.tmp
 *.swp
+/k8s/base/secrets.yaml

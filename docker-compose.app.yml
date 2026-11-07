@@ -1,0 +1,43 @@
+
+services:
+  backend:
+    image: cloudtask-api:1.0
+    container_name: cloudtask-api-app
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/cloudtask
+      SPRING_DATASOURCE_USERNAME: cloudtask
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      APP_JWT_SECRET: ${CLOUDTASK_JWT_SECRET}
+    networks:
+      - cloudtask-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  frontend:
+    image: cloudtask-frontend:1.0
+    container_name: cloudtask-frontend-app
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - cloudtask-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  cloudtask-network:
+    external: true
+    name: cloudtask_default
+

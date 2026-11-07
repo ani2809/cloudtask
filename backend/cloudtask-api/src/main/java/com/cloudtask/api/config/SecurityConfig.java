@@ -108,6 +108,9 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
 
+// Public health endpoints for Kubernetes probes
+.requestMatchers("/actuator/health/**", "/actuator/health").permitAll()
+
                 // Public endpoints
                 .requestMatchers("/actuator/health").permitAll()
 
