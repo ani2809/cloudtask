@@ -171,6 +171,41 @@ public class TaskService {
         return toResponse(updatedTask);
     }
 
+    @Transactional
+public TaskResponse updateTaskPriority(
+        UUID taskId,
+        String newPriority,
+        String userEmail) {
+
+    User user = userRepository.findByEmail(userEmail)
+            .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "User not found"));
+
+    Task task = taskRepository.findById(taskId)
+            .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Task not found"));
+
+    boolean isAdmin = user.getRole() == UserRole.ADMIN;
+
+    boolean isCreator =
+            task.getCreatedBy().getId().equals(user.getId());
+
+    boolean isAssignee =
+            task.getAssignedTo() != null
+                    && task.getAssignedTo().getId().equals(user.getId());
+
+    if (!isAdmin && !isCreator && !isAssignee) {
+        throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "You are not authorized to update this task");
+    }
+
+    task.setPriority(newPriority);
+
+    Task updatedTask = taskRepository.save(task);
+
+    return toResponse(updatedTask);
+}
     private TaskResponse toResponse(Task task) {
 
         return new TaskResponse(

@@ -1,8 +1,8 @@
-
 package com.cloudtask.api.controller;
 
 import com.cloudtask.api.dto.CreateTaskRequest;
 import com.cloudtask.api.dto.TaskResponse;
+import com.cloudtask.api.dto.UpdateTaskPriorityRequest;
 import com.cloudtask.api.dto.UpdateTaskStatusRequest;
 import com.cloudtask.api.service.TaskService;
 
@@ -69,6 +69,19 @@ public class TaskController {
         return taskService.updateTaskStatus(
                 taskId,
                 request.status(),
+                authentication.getName()
+        );
+    }
+
+    @PatchMapping("/{taskId}/priority")
+    public TaskResponse updateTaskPriority(
+            @PathVariable UUID taskId,
+            @Valid @RequestBody UpdateTaskPriorityRequest request,
+            Authentication authentication) {
+
+        return taskService.updateTaskPriority(
+                taskId,
+                request.priority(),
                 authentication.getName()
         );
     }

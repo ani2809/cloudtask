@@ -133,6 +133,7 @@ function App() {
   const [creatingTask, setCreatingTask] = useState(false)
 
   const [updatingTaskId, setUpdatingTaskId] = useState(null)
+  const [updatingPriorityTaskId, setUpdatingPriorityTaskId] = useState(null)
 
   const handleAuthSubmit = async (event) => {
     event.preventDefault()
@@ -283,6 +284,24 @@ function App() {
       setTaskError(err.message)
     } finally {
       setUpdatingTaskId(null)
+    }
+  }
+
+  const handlePriorityChange = async (taskId, priority) => {
+    setUpdatingPriorityTaskId(taskId)
+    setTaskError('')
+
+    try {
+      await apiRequest(`/api/tasks/${taskId}/priority`, {
+        method: 'PATCH',
+        body: JSON.stringify({ priority }),
+      })
+
+      await loadTasks()
+    } catch (err) {
+      setTaskError(err.message)
+    } finally {
+      setUpdatingPriorityTaskId(null)
     }
   }
 
@@ -605,6 +624,20 @@ function App() {
                   </div>
 
                   <div className="task-status-control">
+                    <label htmlFor={`priority-${task.id}`}>Priority</label>
+                    <select
+                      id={`priority-${task.id}`}
+                      value={task.priority || 'MEDIUM'}
+                      disabled={updatingPriorityTaskId === task.id}
+                      onChange={(event) =>
+                        handlePriorityChange(task.id, event.target.value)
+                      }
+                    >
+                      <option value="LOW">Low</option>
+                      <option value="MEDIUM">Medium</option>
+                      <option value="HIGH">High</option>
+                    </select>
+
                     <label htmlFor={`status-${task.id}`}>Status</label>
                     <select
                       id={`status-${task.id}`}

@@ -1,6 +1,8 @@
 
 package com.cloudtask.api.exception;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.http.HttpStatus;
@@ -10,7 +12,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
-import com.cloudtask.api.exception.InvalidRefreshTokenException;
+
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -18,15 +20,18 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-        @ExceptionHandler(InvalidRefreshTokenException.class)
-public ResponseEntity<Map<String, Object>> handleInvalidRefreshToken(
-        InvalidRefreshTokenException exception) {
+    private static final Logger log =
+            LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    return buildErrorResponse(
-            HttpStatus.UNAUTHORIZED,
-            exception.getMessage()
-    );
-}
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidRefreshToken(
+            InvalidRefreshTokenException exception) {
+        return buildErrorResponse(
+                HttpStatus.UNAUTHORIZED,
+                exception.getMessage()
+        );
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationException(
             MethodArgumentNotValidException exception) {
@@ -53,7 +58,6 @@ public ResponseEntity<Map<String, Object>> handleInvalidRefreshToken(
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Map<String, Object>> handleInvalidRequestBody(
             HttpMessageNotReadableException exception) {
-
         return buildErrorResponse(
                 HttpStatus.BAD_REQUEST,
                 "Invalid or malformed request body"
@@ -78,7 +82,6 @@ public ResponseEntity<Map<String, Object>> handleInvalidRefreshToken(
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(
             IllegalArgumentException exception) {
-
         return buildErrorResponse(
                 HttpStatus.BAD_REQUEST,
                 exception.getMessage() != null
@@ -87,22 +90,18 @@ public ResponseEntity<Map<String, Object>> handleInvalidRefreshToken(
         );
     }
 
-    // Handle invalid login credentials and authentication failures.
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<Map<String, Object>> handleAuthenticationException(
             AuthenticationException exception) {
-
         return buildErrorResponse(
                 HttpStatus.UNAUTHORIZED,
                 "Invalid email or password"
         );
     }
 
-    // Handle authenticated users who lack the required permissions.
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, Object>> handleAccessDeniedException(
             AccessDeniedException exception) {
-
         return buildErrorResponse(
                 HttpStatus.FORBIDDEN,
                 "You are not authorized to access this resource"
@@ -113,6 +112,9 @@ public ResponseEntity<Map<String, Object>> handleInvalidRefreshToken(
     public ResponseEntity<Map<String, Object>> handleGeneralException(
             Exception exception) {
 
+        // Log the actual exception and stack trace for debugging.
+        log.error("Unexpected application error", exception);
+
         return buildErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "An unexpected error occurred"
@@ -122,7 +124,6 @@ public ResponseEntity<Map<String, Object>> handleInvalidRefreshToken(
     private ResponseEntity<Map<String, Object>> buildErrorResponse(
             HttpStatus status,
             String message) {
-
         return ResponseEntity.status(status)
                 .body(createErrorResponse(status, message));
     }
